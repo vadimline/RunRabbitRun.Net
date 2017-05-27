@@ -1,0 +1,29 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "isShellCommand": true,
+    "command": "dotnet",
+    "args": [],
+    "tasks": [
+        {
+            "taskName": "build",
+            "args": [
+                "${workspaceRoot}/RunRabbitRun.Net.sln"
+            ],
+            "isBuildCommand": true,
+            "showOutput": "silent",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "taskName": "test",
+            "args": [
+                "${workspaceRoot}/test/RunRabbitRun.Net.Test/RunRabbitRun.Net.Test.csproj"
+            ],
+            "isBuildCommand": false,
+            "isTestCommand": true,
+            "showOutput": "silent",
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

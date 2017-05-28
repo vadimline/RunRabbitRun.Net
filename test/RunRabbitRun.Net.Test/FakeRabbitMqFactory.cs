@@ -16,9 +16,9 @@ namespace RunRabbitRun.Net.Test
             return A.Fake<IModel>();
         }
 
-        public static EventingBasicConsumer GetConsumer()
+        public static IRabbitEventingBasicConsumer GetEventingBasicConsumer()
         {
-            return A.Fake<EventingBasicConsumer>();
+            return A.Fake<IRabbitEventingBasicConsumer>();
         }
     }
 }

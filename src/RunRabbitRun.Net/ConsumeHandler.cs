@@ -21,7 +21,7 @@ namespace RunRabbitRun.Net
         private string consumeQueueName;
         private bool autoAck;
         private IContainer dependenciesContainer;
-        private EventingBasicConsumer eventBasicConsumer;
+        private IRabbitEventingBasicConsumer eventingBasicConsumer;
 
         private bool isReturnResponse;
         private List<ParameterResolver> parameterResolvers = new List<ParameterResolver>();
@@ -41,20 +41,23 @@ namespace RunRabbitRun.Net
             this.autoAck = autoAck;
             this.dependenciesContainer = dependenciesContainer;
 
-            this.dependenciesContainer.UseInstance<IModel>(channelModel);
-            this.eventBasicConsumer = GetConsumer();
-            this.eventBasicConsumer.Received += OnMessageReceived;
+            this.dependenciesContainer.RegisterDelegate<IModel>(r => channelModel, setup: Setup.With(allowDisposableTransient: true));
+            this.eventingBasicConsumer = GetConsumer();
+            this.eventingBasicConsumer.Received += OnMessageReceived;
 
             isReturnResponse = ShouldExpectResponse();
             this.ReadMethodArguments();
             this.Consume();
         }
 
-        private EventingBasicConsumer GetConsumer(){
-            if(dependenciesContainer.IsRegistered(typeof(EventingBasicConsumer)))
-                return dependenciesContainer.Resolve<EventingBasicConsumer>();
+        private IRabbitEventingBasicConsumer GetConsumer()
+        {
+            var eventintBasicConsumerInstance = dependenciesContainer
+                .Resolve<IRabbitEventingBasicConsumer>(IfUnresolved.ReturnDefault);
+            if (eventintBasicConsumerInstance != null)
+                return eventintBasicConsumerInstance;
 
-            return new EventingBasicConsumer(this.channelModel);
+            return new RabbitEventingBasicConsumer(this.channelModel);
         }
         private bool ShouldExpectResponse()
         {
@@ -116,7 +119,7 @@ namespace RunRabbitRun.Net
                         reject(false);
                     }
                 }
-            });
+            }).Wait();
         }
 
         private Task InvokeAndForget(params object[] arguments)
@@ -159,7 +162,7 @@ namespace RunRabbitRun.Net
         {
             channelModel.BasicConsume(consumeQueueName,
                 autoAck,
-                eventBasicConsumer);
+                (IBasicConsumer)eventingBasicConsumer);
         }
     }
 }

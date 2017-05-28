@@ -3,7 +3,7 @@ using RunRabbitRun.Net.Test.Models;
 
 namespace RunRabbitRun.Net.Test.Dependencies
 {
-    public interface IUserRepository
+    public class UserRepository:IUserRepository
     {
     }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using RunRabbitRun.Net.Attributes;
 using RunRabbitRun.Net.Test.Dependencies;
@@ -6,15 +7,21 @@ using RunRabbitRun.Net.Test.Models;
 namespace RunRabbitRun.Net.Test.Consumers
 {
     [Consumer]
-    [Exchange(name: "directexchange", Type = "direct", Durable = true, AutoDelete = false)]
     public interface IBasicConsumer
     {
-        [Queue(exchange: "directexchange", queue: "user-create", routingKey: "user.cmd.create", AutoDelete = true)]
-        [Consume(autoAck: true)]
-        [Qos(100)]
-        [Channel(name: "userschannel")]
-        Task CreateAsync(
-            [Inject] IUserRepository userRepository,
-            [JsonMessage] User user);
+        [Consume(queue: "queue", autoAck: true)]
+        Task ShouldInject([Inject] IUserRepository userRepository);
+
+        [Consume(queue: "queue", autoAck: true)]
+        Task ShouldInjectRawBytesMessage([Message]byte[] message);
+
+        [Consume(queue: "queue", autoAck: true)]
+        Task ShouldInjectTextMessage([TextMessage]string message);
+
+        [Consume(queue: "queue", autoAck: true)]
+        Task ShouldInjectDeserializedJsonMessage([JsonMessage]User message);
+
+        [Consume(queue: "queue", autoAck: false)]
+        Task ShouldInjectAckAndNoAckCallbacks(Action ack, Action<bool> noack);
     }
 }

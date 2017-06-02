@@ -38,7 +38,7 @@ namespace RunRabbitRun.Net
 
         private void Init()
         {
-            var consumerTypeAttributes = consumerType.GetTypeInfo().GetAttributes(null, true);
+            var consumerTypeAttributes = GetTypeAttributes(consumerType);
             var channelAttribute = FindAttribute<ChannelAttribute>(consumerTypeAttributes);
             if (channelAttribute != null)
             {
@@ -54,6 +54,23 @@ namespace RunRabbitRun.Net
             EnsureExchangeToExchangeBinding(consumerTypeAttributes);
 
             BuildConsumeHandlers();
+        }
+
+        public IEnumerable<Attribute> GetTypeAttributes(Type type)
+        {
+            List<Attribute> attributes = new List<Attribute>();
+            Type getFromType = type;
+            while (getFromType != null)
+            {
+                attributes.AddRange(getFromType.GetTypeInfo().GetAttributes(null, true));
+                var interfaces = getFromType.GetInterfaces();
+                foreach (var interf in interfaces)
+                {
+                    attributes.AddRange(GetTypeAttributes(interf));
+                }
+                getFromType = getFromType.GetBaseType();
+            }
+            return attributes;
         }
 
         private void BuildConsumeHandlers()

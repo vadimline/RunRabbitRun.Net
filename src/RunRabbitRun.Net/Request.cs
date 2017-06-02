@@ -1,15 +1,14 @@
+using System;
 using System.Collections.Generic;
 
 namespace RunRabbitRun.Net
 {
-    public class Request
+    public class Request : Envelope
     {
-        public string Routing { get; set; }
-        public string Body { get; set; }
-        public string ContentEncoding { get; set; } = "utf-8";
-        public string Exchange { get; set; }
+        public Request()
+        {
+            Expiration = 30000;
+        }
         public string ReplyRoutingKeyPrefix { get; set; }
-        public string ContentType { get; set; }
-        public Dictionary<string, object> Headers { get; set; } = new Dictionary<string, object>();
     }
 }

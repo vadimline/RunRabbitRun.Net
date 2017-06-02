@@ -3,7 +3,7 @@ using DryIoc;
 using Newtonsoft.Json;
 using RabbitMQ.Client.Events;
 
-namespace RunRabbitRun.Net.Parameters
+namespace RunRabbitRun.Net.Resolvers
 {
     public class JsonMessageResolver : TextMessageResolver
     {

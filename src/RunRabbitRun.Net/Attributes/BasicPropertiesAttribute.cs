@@ -4,16 +4,15 @@ using RunRabbitRun.Net.Resolvers;
 
 namespace RunRabbitRun.Net.Attributes
 {
-    public class MessageAttribute : ParameterAttribute
+    public class BasicPropertiesAttribute : ParameterAttribute
     {
-        public MessageAttribute()
+        public BasicPropertiesAttribute()
         {
-
         }
 
         public override ParameterResolver GetParameterResolver(ParameterInfo parameter)
         {
-            return new MessageParameterResolver(parameter);
+            return new BasicPropertiesResolver(parameter);
         }
     }
 }

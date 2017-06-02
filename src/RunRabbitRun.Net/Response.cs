@@ -17,6 +17,18 @@ namespace RunRabbitRun.Net
                 Headers["StatusCode"] = value;
             }
         }
+
+        public string StatusText
+        {
+            get
+            {
+                return Headers["StatusText"] as string;
+            }
+            set
+            {
+                Headers["StatusText"] = value;
+            }
+        }
         public string ReplyTo { get; set; }
         public string ContentEncoding { get; set; } = "utf-8";
         public string ReplyExchange { get; set; }

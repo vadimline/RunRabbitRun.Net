@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using DryIoc;
 using RunRabbitRun.Net.Attributes;
-using RunRabbitRun.Net.Parameters;
+using RunRabbitRun.Net.Resolvers;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Newtonsoft.Json;
@@ -22,7 +22,6 @@ namespace RunRabbitRun.Net
         private bool autoAck;
         private IContainer dependenciesContainer;
         private IRabbitEventingBasicConsumer eventingBasicConsumer;
-
         private bool isReturnResponse;
         private List<ParameterResolver> parameterResolvers = new List<ParameterResolver>();
 
@@ -41,7 +40,6 @@ namespace RunRabbitRun.Net
             this.autoAck = autoAck;
             this.dependenciesContainer = dependenciesContainer;
 
-            this.dependenciesContainer.RegisterDelegate<IModel>(r => channelModel, setup: Setup.With(allowDisposableTransient: true));
             this.eventingBasicConsumer = GetConsumer();
             this.eventingBasicConsumer.Received += OnMessageReceived;
 
@@ -84,39 +82,42 @@ namespace RunRabbitRun.Net
         {
             Task.Run(async () =>
             {
-                Action ack = null;
-                Action<bool> reject = null;
-                if (!autoAck)
+                using (var scope = dependenciesContainer.OpenScope())
                 {
-                    ack = () => channelModel.BasicAck(args.DeliveryTag, false);
-                    reject = (bool requeue) => channelModel.BasicReject(args.DeliveryTag, requeue);
-                }
-
-                try
-                {
-                    List<object> arguments = new List<object>();
-                    foreach (var parameterResolver in parameterResolvers)
-                    {
-                        arguments.Add(parameterResolver.Resolve(dependenciesContainer, args));
-                    }
-
+                    Action ack = null;
+                    Action<bool> reject = null;
                     if (!autoAck)
                     {
-                        arguments.Add(ack);
-                        arguments.Add(reject);
+                        ack = () => channelModel.BasicAck(args.DeliveryTag, false);
+                        reject = (bool requeue) => channelModel.BasicReject(args.DeliveryTag, requeue);
                     }
 
-                    if (isReturnResponse)
-                        await InvokeAndProcessResponseAsync(args, arguments.ToArray()).ConfigureAwait(false);
-                    else
-                        await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.Write(ex);
-                    if (!autoAck)
+                    try
                     {
-                        reject(false);
+                        List<object> arguments = new List<object>();
+                        foreach (var parameterResolver in parameterResolvers)
+                        {
+                            arguments.Add(parameterResolver.Resolve(scope, args));
+                        }
+
+                        if (!autoAck)
+                        {
+                            arguments.Add(ack);
+                            arguments.Add(reject);
+                        }
+
+                        if (isReturnResponse)
+                            await InvokeAndProcessResponseAsync(args, arguments.ToArray()).ConfigureAwait(false);
+                        else
+                            await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.Write(ex);
+                        if (!autoAck)
+                        {
+                            reject(false);
+                        }
                     }
                 }
             }).Wait();

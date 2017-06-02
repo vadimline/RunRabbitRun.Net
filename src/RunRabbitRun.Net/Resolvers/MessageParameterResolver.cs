@@ -3,7 +3,7 @@ using System.Reflection;
 using DryIoc;
 using RabbitMQ.Client.Events;
 
-namespace RunRabbitRun.Net.Parameters
+namespace RunRabbitRun.Net.Resolvers
 {
     public class MessageParameterResolver : ParameterResolver
     {

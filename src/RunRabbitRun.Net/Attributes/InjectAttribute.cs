@@ -1,6 +1,6 @@
 using System;
 using System.Reflection;
-using RunRabbitRun.Net.Parameters;
+using RunRabbitRun.Net.Resolvers;
 
 namespace RunRabbitRun.Net.Attributes
 {

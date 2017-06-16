@@ -38,6 +38,9 @@ namespace RunRabbitRun.Net
                     properties.Expiration = envelope.Expiration.ToString();
                 properties.Headers = envelope.Headers;
 
+                if (envelope.Durable)
+                    properties.DeliveryMode = 2;
+
                 model.BasicPublish(envelope.Exchange
                 , envelope.Routing
                 , false

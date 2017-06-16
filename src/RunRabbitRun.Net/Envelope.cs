@@ -6,6 +6,7 @@ namespace RunRabbitRun.Net
     public class Envelope
     {
         public string CorrelationId { get; set; } = Guid.NewGuid().ToString();
+        public bool Durable { get; set; }
         public string Routing { get; set; }
         public string Body { get; set; }
         public string Exchange { get; set; }

@@ -21,7 +21,8 @@ namespace RunRabbitRun.Net.Sample
                 Password = "12345",
                 VirtualHost = "prmq",
                 RequestedHeartbeat = 10,
-                AutomaticRecoveryEnabled = true
+                AutomaticRecoveryEnabled = true,
+                DispatchConsumersAsync = true
             };
 
             var connection = mqConnectionFactory.CreateConnection("RunRabbitRun.Net.Sample");

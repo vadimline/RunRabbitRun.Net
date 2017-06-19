@@ -5,7 +5,7 @@ using RabbitMQ.Client.Events;
 namespace RunRabbitRun.Net
 {
     //We need this class so we can mock events
-    public class RabbitEventingBasicConsumer : EventingBasicConsumer, IRabbitEventingBasicConsumer
+    public class RabbitEventingBasicConsumer : AsyncEventingBasicConsumer, IRabbitEventingBasicConsumer
     {
         //     Constructor which sets the Model property to the /// given value.
         public RabbitEventingBasicConsumer(IModel model) : base(model)
@@ -16,7 +16,7 @@ namespace RunRabbitRun.Net
         //
         // Summary:
         //     Event fired on HandleBasicDeliver.
-        public new event EventHandler<BasicDeliverEventArgs> Received
+        public new event AsyncEventHandler<BasicDeliverEventArgs> Received
         {
             add
             {
@@ -30,7 +30,7 @@ namespace RunRabbitRun.Net
         //
         // Summary:
         //     Event fired on HandleBasicConsumeOk.
-        public new event EventHandler<ConsumerEventArgs> Registered
+        public new event AsyncEventHandler<ConsumerEventArgs> Registered
         {
             add
             {
@@ -45,7 +45,7 @@ namespace RunRabbitRun.Net
         //
         // Summary:
         //     Event fired on HandleModelShutdown.
-        public new event EventHandler<ShutdownEventArgs> Shutdown
+        public new event AsyncEventHandler<ShutdownEventArgs> Shutdown
         {
             add
             {
@@ -60,7 +60,7 @@ namespace RunRabbitRun.Net
         //
         // Summary:
         //     Event fired on HandleBasicCancelOk.
-        public new event EventHandler<ConsumerEventArgs> Unregistered
+        public new event AsyncEventHandler<ConsumerEventArgs> Unregistered
         {
             add
             {

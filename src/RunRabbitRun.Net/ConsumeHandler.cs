@@ -78,49 +78,46 @@ namespace RunRabbitRun.Net
             }
         }
 
-        private void OnMessageReceived(object sender, BasicDeliverEventArgs args)
+        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs args)
         {
-            Task.Run(async () =>
+            using (var scope = dependenciesContainer.OpenScope())
             {
-                using (var scope = dependenciesContainer.OpenScope())
+                Action ack = null;
+                Action<bool> reject = null;
+                if (!autoAck)
                 {
-                    Action ack = null;
-                    Action<bool> reject = null;
+                    ack = () => channelModel.BasicAck(args.DeliveryTag, false);
+                    reject = (bool requeue) => channelModel.BasicReject(args.DeliveryTag, requeue);
+                }
+
+                try
+                {
+                    List<object> arguments = new List<object>();
+                    foreach (var parameterResolver in parameterResolvers)
+                    {
+                        arguments.Add(parameterResolver.Resolve(scope, args));
+                    }
+
                     if (!autoAck)
                     {
-                        ack = () => channelModel.BasicAck(args.DeliveryTag, false);
-                        reject = (bool requeue) => channelModel.BasicReject(args.DeliveryTag, requeue);
+                        arguments.Add(ack);
+                        arguments.Add(reject);
                     }
 
-                    try
+                    if (isReturnResponse)
+                        await InvokeAndProcessResponseAsync(args, arguments.ToArray()).ConfigureAwait(false);
+                    else
+                        await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.Write(ex);
+                    if (!autoAck)
                     {
-                        List<object> arguments = new List<object>();
-                        foreach (var parameterResolver in parameterResolvers)
-                        {
-                            arguments.Add(parameterResolver.Resolve(scope, args));
-                        }
-
-                        if (!autoAck)
-                        {
-                            arguments.Add(ack);
-                            arguments.Add(reject);
-                        }
-
-                        if (isReturnResponse)
-                            await InvokeAndProcessResponseAsync(args, arguments.ToArray()).ConfigureAwait(false);
-                        else
-                            await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.Write(ex);
-                        if (!autoAck)
-                        {
-                            reject(false);
-                        }
+                        reject(false);
                     }
                 }
-            }).Wait();
+            }
         }
 
         private Task InvokeAndForget(params object[] arguments)
@@ -145,7 +142,7 @@ namespace RunRabbitRun.Net
                 basicProperties.Headers = response.Headers;
 
             channelModel.BasicPublish(
-                response.ReplyExchange, //TADADADAM : what exchange to use?
+                response.ReplyExchange, //TADADADAM : what exchange to use? Allow to specify default reply exchange for Rabbit
                 response.ReplyTo ?? args.BasicProperties.ReplyTo,
                 false,
                 basicProperties,

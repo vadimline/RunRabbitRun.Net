@@ -9,18 +9,18 @@ namespace RunRabbitRun.Net
         //
         // Summary:
         //     Event fired on HandleBasicDeliver.
-        event EventHandler<BasicDeliverEventArgs> Received;
+        event AsyncEventHandler<BasicDeliverEventArgs> Received;
         //
         // Summary:
         //     Event fired on HandleBasicConsumeOk.
-        event EventHandler<ConsumerEventArgs> Registered;
+        event AsyncEventHandler<ConsumerEventArgs> Registered;
         //
         // Summary:
         //     Event fired on HandleModelShutdown.
-        event EventHandler<ShutdownEventArgs> Shutdown;
+        event AsyncEventHandler<ShutdownEventArgs> Shutdown;
         //
         // Summary:
         //     Event fired on HandleBasicCancelOk.
-        event EventHandler<ConsumerEventArgs> Unregistered;
+        event AsyncEventHandler<ConsumerEventArgs> Unregistered;
     }
 }

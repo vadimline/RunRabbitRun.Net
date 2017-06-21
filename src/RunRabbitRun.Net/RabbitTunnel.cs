@@ -10,10 +10,11 @@ namespace RunRabbitRun.Net
     public class RabbitTunnel : IRabbitTunnel
     {
         private IConnection connection;
-        private string exchange;
-        private string rabbitHoleId;
-        private string rabbitHoleQueueName;
-        private EventingBasicConsumer consumer;
+        private string replyExchange;
+        private string replyRoute;
+        private string rabbitTunnelId;
+        private string rabbitTunnelQueueName;
+        private AsyncEventingBasicConsumer consumer;
         private Dictionary<string, Action<Response>> cunsumersCallbacks = new Dictionary<string, Action<Response>>();
         private object consumersCallbackLock = new object();
         private object publishLock = new object();
@@ -28,22 +29,27 @@ namespace RunRabbitRun.Net
             }
             set => channel = value;
         }
-        public RabbitTunnel(string replyExchange, IConnection connection)
+        public RabbitTunnel(
+            string replyExchange,
+            string replyRoute,
+            string tunnelName,
+            IConnection connection)
         {
             this.connection = connection;
-            this.exchange = replyExchange;
-            rabbitHoleId = Guid.NewGuid().ToString();
-            rabbitHoleQueueName = $"rh-{rabbitHoleId}";
+            this.replyExchange = replyExchange;
+            rabbitTunnelId = Guid.NewGuid().ToString();
+            this.replyRoute = $"{replyRoute}.{rabbitTunnelId}";
+            rabbitTunnelQueueName = $"rtunnel-tunnelName-{rabbitTunnelId}";
         }
         private void Setup()
         {
             channel = connection.CreateModel();
             channel.BasicReturn += OnReturn;
-            channel.QueueDeclare(rabbitHoleQueueName, false, true, true, null);
-            channel.QueueBind(rabbitHoleQueueName, exchange, $"");
-            consumer = new EventingBasicConsumer(channel);
-            consumer.Received += OnMessage;
-            channel.BasicConsume(rabbitHoleQueueName, true, consumer);
+            channel.QueueDeclare(rabbitTunnelQueueName, false, true, true, null);
+            channel.QueueBind(rabbitTunnelQueueName, replyExchange, replyRoute);
+            consumer = new AsyncEventingBasicConsumer(channel);
+            consumer.Received += OnMessageReceived;
+            channel.BasicConsume(rabbitTunnelQueueName, true, consumer);
         }
 
         private void OnReturn(object sender, BasicReturnEventArgs args)
@@ -63,7 +69,7 @@ namespace RunRabbitRun.Net
             consumer(response);
         }
 
-        private void OnMessage(object sender, BasicDeliverEventArgs args)
+        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs args)
         {
             if (!args.BasicProperties.IsCorrelationIdPresent())
                 return;
@@ -113,34 +119,29 @@ namespace RunRabbitRun.Net
 
             Send(request);
 
-            await Task.Delay(10000, delayCancelToken.Token).ContinueWith(task =>
-            {
-                UnregisterCallback(request.CorrelationId);
-                if (!task.IsCanceled)
-                    // This mean that delay task complete and no response recieved
-                    response = new Response
-                    {
-                        StatusCode = 408,
-                        StatusText = "Timeout"
-                    };
-            });
+            await Task.Delay(request.Expiration == -1 ? 10000 : request.Expiration, delayCancelToken.Token).ContinueWith(task =>
+              {
+                  UnregisterCallback(request.CorrelationId);
+                  if (!task.IsCanceled)
+                      // This mean that delay task complete and no response recieved
+                      response = new Response
+                      {
+                          StatusCode = 408,
+                          StatusText = "Timeout"
+                      };
+              });
 
             return response;
-        }
-
-        public void SendAndForget(Request request)
-        {
-            Send(request);
         }
 
         private void Send(Request request)
         {
             var properties = channel.CreateBasicProperties();
-            properties.ReplyTo = request.ReplyRoutingKeyPrefix + $".{rabbitHoleId}";
+            properties.ReplyTo = replyRoute;
             properties.ContentEncoding = request.ContentEncoding;
-            
-            if (request.Expiration != int.MaxValue)
-                properties.Expiration = request.Expiration.ToString();
+
+            int expiration = request.Expiration == -1 ? 10000 : request.Expiration;
+            properties.Expiration = expiration.ToString();
 
             if (!string.IsNullOrEmpty(request.ContentType))
                 properties.ContentType = request.ContentType;
@@ -185,7 +186,7 @@ namespace RunRabbitRun.Net
         {
             if (!disposedValue)
             {
-                consumer.Received -= OnMessage;
+                consumer.Received -= OnMessageReceived;
                 channel.BasicReturn -= OnReturn;
                 if (disposing)
                 {

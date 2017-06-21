@@ -9,6 +9,5 @@ namespace RunRabbitRun.Net
         {
             Expiration = 30000;
         }
-        public string ReplyRoutingKeyPrefix { get; set; }
     }
 }

@@ -33,7 +33,7 @@ namespace RunRabbitRun.Net.Test
 
             var args = new BasicDeliverEventArgs();
 
-            rmqConsumer.Received += Raise.With<AsyncEventHandler<BasicDeliverEventArgs>>(null, args);
+            rmqConsumer.Received += Raise.With(null, args);
 
             A.CallTo(() =>
                 consumer.ShouldInject(dependecy)).MustHaveHappened();
@@ -56,7 +56,7 @@ namespace RunRabbitRun.Net.Test
             byte[] message = Encoding.UTF8.GetBytes("textmessage"); ;
             var args = new BasicDeliverEventArgs();
             args.Body = message;
-            rmqConsumer.Received += Raise.With<AsyncEventHandler<BasicDeliverEventArgs>>(null, args);
+            rmqConsumer.Received += Raise.With(null, args);
 
             A.CallTo(() => consumer
             .ShouldInjectRawBytesMessage(A<byte[]>
@@ -82,7 +82,7 @@ namespace RunRabbitRun.Net.Test
             byte[] message = Encoding.UTF8.GetBytes("textmessage"); ;
             var args = new BasicDeliverEventArgs();
             args.Body = message;
-            rmqConsumer.Received += Raise.With<AsyncEventHandler<BasicDeliverEventArgs>>(null, args);
+            rmqConsumer.Received += Raise.With(null, args);
 
             A.CallTo(() => consumer
             .ShouldInjectTextMessage(A<string>
@@ -112,7 +112,7 @@ namespace RunRabbitRun.Net.Test
             byte[] message = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(user));
             var args = new BasicDeliverEventArgs();
             args.Body = message;
-            rmqConsumer.Received += Raise.With<AsyncEventHandler<BasicDeliverEventArgs>>(null, args);
+            rmqConsumer.Received += Raise.With(null, args);
 
             A.CallTo(() => consumer
             .ShouldInjectDeserializedJsonMessage(A<User>
@@ -140,7 +140,7 @@ namespace RunRabbitRun.Net.Test
             byte[] message = Encoding.UTF8.GetBytes("message");
             var args = new BasicDeliverEventArgs();
             args.Body = message;
-            rmqConsumer.Received += Raise.With<AsyncEventHandler<BasicDeliverEventArgs>>(null, args);
+            rmqConsumer.Received += Raise.With(null, args);
 
             A.CallTo(() => consumer
             .ShouldInjectAckAndNoAckCallbacks(A<Action>

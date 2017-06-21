@@ -78,7 +78,7 @@ namespace RunRabbitRun.Net
             }
         }
 
-        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs args)
+        private async void OnMessageReceived(object sender, BasicDeliverEventArgs args)
         {
             using (var scope = dependenciesContainer.OpenScope())
             {

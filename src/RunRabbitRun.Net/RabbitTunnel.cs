@@ -14,7 +14,7 @@ namespace RunRabbitRun.Net
         private string replyRoute;
         private string rabbitTunnelId;
         private string rabbitTunnelQueueName;
-        private AsyncEventingBasicConsumer consumer;
+        private EventingBasicConsumer consumer;
         private Dictionary<string, Action<Response>> cunsumersCallbacks = new Dictionary<string, Action<Response>>();
         private object consumersCallbackLock = new object();
         private object publishLock = new object();
@@ -47,7 +47,7 @@ namespace RunRabbitRun.Net
             channel.BasicReturn += OnReturn;
             channel.QueueDeclare(rabbitTunnelQueueName, false, true, true, null);
             channel.QueueBind(rabbitTunnelQueueName, replyExchange, replyRoute);
-            consumer = new AsyncEventingBasicConsumer(channel);
+            consumer = new EventingBasicConsumer(channel);
             consumer.Received += OnMessageReceived;
             channel.BasicConsume(rabbitTunnelQueueName, true, consumer);
         }
@@ -69,7 +69,7 @@ namespace RunRabbitRun.Net
             consumer(response);
         }
 
-        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs args)
+        private void OnMessageReceived(object sender, BasicDeliverEventArgs args)
         {
             if (!args.BasicProperties.IsCorrelationIdPresent())
                 return;

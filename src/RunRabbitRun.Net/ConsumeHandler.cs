@@ -152,6 +152,9 @@ namespace RunRabbitRun.Net
 
         private byte[] SerializeBody(string contentEncoding, string body)
         {
+            if (string.IsNullOrEmpty(body))
+                return null;
+
             var encoding = System.Text.Encoding.GetEncoding(contentEncoding);
             return encoding.GetBytes(body);
         }

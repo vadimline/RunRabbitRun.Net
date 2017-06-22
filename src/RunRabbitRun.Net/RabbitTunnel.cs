@@ -39,7 +39,7 @@ namespace RunRabbitRun.Net
             this.replyExchange = replyExchange;
             rabbitTunnelId = Guid.NewGuid().ToString();
             this.replyRoute = $"{replyRoute}.{rabbitTunnelId}";
-            rabbitTunnelQueueName = $"rtunnel-tunnelName-{rabbitTunnelId}";
+            rabbitTunnelQueueName = $"rtunnel-{tunnelName}-{rabbitTunnelId}";
         }
         private void Setup()
         {
@@ -95,6 +95,9 @@ namespace RunRabbitRun.Net
         //TODO: Same logic is used in multiple places, consider move it to class
         private string GetBody(BasicDeliverEventArgs args)
         {
+            if (args.Body == null)
+                return null;
+
             var encoding = System.Text.Encoding.GetEncoding(args.BasicProperties.ContentEncoding);
             return encoding.GetString(args.Body);
         }

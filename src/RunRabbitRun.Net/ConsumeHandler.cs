@@ -10,6 +10,7 @@ using RunRabbitRun.Net.Resolvers;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace RunRabbitRun.Net
 {
@@ -151,7 +152,7 @@ namespace RunRabbitRun.Net
             if (!args.BasicProperties.Headers.ContainsKey("rabbit-callback-id"))
                 return;
 
-            var callBackId = args.BasicProperties.Headers["rabbit-callback-id"] as string;
+            var callBackId = Encoding.UTF8.GetString((byte[])args.BasicProperties.Headers["rabbit-callback-id"]) as string;
 
             basicProperties.Headers.Add("rabbit-callback-id", callBackId);
 

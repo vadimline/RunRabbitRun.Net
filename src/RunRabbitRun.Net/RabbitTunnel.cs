@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
@@ -18,6 +19,7 @@ namespace RunRabbitRun.Net
         private Dictionary<string, Action<Response>> cunsumersCallbacks = new Dictionary<string, Action<Response>>();
         private object consumersCallbackLock = new object();
         private object publishLock = new object();
+        private bool initialized = false;
         private IModel channel;
         public IModel Channel
         {
@@ -43,13 +45,14 @@ namespace RunRabbitRun.Net
         }
         private void Setup()
         {
-            channel = connection.CreateModel();
-            channel.BasicReturn += OnReturn;
-            channel.QueueDeclare(rabbitTunnelQueueName, false, true, true, null);
-            channel.QueueBind(rabbitTunnelQueueName, replyExchange, replyRoute);
-            consumer = new EventingBasicConsumer(channel);
+            Channel = connection.CreateModel();
+            Channel.BasicReturn += OnReturn;
+            Channel.QueueDeclare(rabbitTunnelQueueName, false, true, true, null);
+            Channel.QueueBind(rabbitTunnelQueueName, replyExchange, replyRoute);
+            consumer = new EventingBasicConsumer(Channel);
             consumer.Received += OnMessageReceived;
-            channel.BasicConsume(rabbitTunnelQueueName, true, consumer);
+            Channel.BasicConsume(rabbitTunnelQueueName, true, consumer);
+            initialized = true;
         }
 
         private void OnReturn(object sender, BasicReturnEventArgs args)
@@ -74,10 +77,10 @@ namespace RunRabbitRun.Net
             if (!args.BasicProperties.IsHeadersPresent())
                 return;
 
-            if(!args.BasicProperties.Headers.ContainsKey("rabbit-callback-id"))
+            if (!args.BasicProperties.Headers.ContainsKey("rabbit-callback-id"))
                 return;
 
-            var callBackId = args.BasicProperties.Headers["rabbit-callback-id"] as string;
+            var callBackId = Encoding.UTF8.GetString((byte[])args.BasicProperties.Headers["rabbit-callback-id"]) as string;
 
             if (!cunsumersCallbacks.ContainsKey(callBackId))
                 return;
@@ -145,7 +148,7 @@ namespace RunRabbitRun.Net
 
         private void Send(string callBackId, Request request)
         {
-            var properties = channel.CreateBasicProperties();
+            var properties = Channel.CreateBasicProperties();
             properties.ReplyTo = replyRoute;
             properties.ContentEncoding = request.ContentEncoding;
 
@@ -166,7 +169,7 @@ namespace RunRabbitRun.Net
             //Since IModel not thread safe we will lock publishing until official client will not support async
             lock (publishLock)
             {
-                channel.BasicPublish(
+                Channel.BasicPublish(
                     request.Exchange,
                     request.Routing,
                     true,
@@ -199,19 +202,24 @@ namespace RunRabbitRun.Net
         {
             if (!disposedValue)
             {
-                consumer.Received -= OnMessageReceived;
-                channel.BasicReturn -= OnReturn;
-                if (disposing)
+                if (initialized)
                 {
-                    channel.BasicCancel(consumer.ConsumerTag);
-                    channel.Close();
-                    channel.Dispose();
-                    // TODO: dispose managed state (managed objects).
+                    consumer.Received -= OnMessageReceived;
+                    channel.BasicReturn -= OnReturn;
+                    if (disposing)
+                    {
+                        channel.BasicCancel(consumer.ConsumerTag);
+                        channel.Close();
+                        channel.Dispose();
+                        // TODO: dispose managed state (managed objects).
+                    }
+
+                    // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                    // TODO: set large fields to null.
+                    cunsumersCallbacks.Clear();
                 }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
-                cunsumersCallbacks.Clear();
+
                 cunsumersCallbacks = null;
                 consumer = null;
                 connection = null;

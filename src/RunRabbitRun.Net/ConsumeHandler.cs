@@ -136,13 +136,27 @@ namespace RunRabbitRun.Net
 
             var basicProperties = channelModel.CreateBasicProperties();
             basicProperties.ContentEncoding = response.ContentEncoding;
+
             if (args.BasicProperties.IsCorrelationIdPresent())
                 basicProperties.CorrelationId = args.BasicProperties.CorrelationId;
+
             if (response.Headers.Count > 0)
                 basicProperties.Headers = response.Headers;
+            else
+                basicProperties.Headers = new Dictionary<string, object>();
+
+            if (!args.BasicProperties.IsHeadersPresent())
+                return;
+
+            if (!args.BasicProperties.Headers.ContainsKey("rabbit-callback-id"))
+                return;
+
+            var callBackId = args.BasicProperties.Headers["rabbit-callback-id"] as string;
+
+            basicProperties.Headers.Add("rabbit-callback-id", callBackId);
 
             channelModel.BasicPublish(
-                response.ReplyExchange, //TADADADAM : what exchange to use? Allow to specify default reply exchange for Rabbit
+                response.ReplyExchange, //TADADADAM : what exchange to use? TODO: Implement default reply exchange for Rabbit
                 response.ReplyTo ?? args.BasicProperties.ReplyTo,
                 false,
                 basicProperties,

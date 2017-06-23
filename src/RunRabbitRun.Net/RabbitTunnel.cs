@@ -71,15 +71,19 @@ namespace RunRabbitRun.Net
 
         private void OnMessageReceived(object sender, BasicDeliverEventArgs args)
         {
-            if (!args.BasicProperties.IsCorrelationIdPresent())
+            if (!args.BasicProperties.IsHeadersPresent())
                 return;
 
-            if (!cunsumersCallbacks.ContainsKey(args.BasicProperties.CorrelationId))
+            if(!args.BasicProperties.Headers.ContainsKey("rabbit-callback-id"))
+                return;
+
+            var callBackId = args.BasicProperties.Headers["rabbit-callback-id"] as string;
+
+            if (!cunsumersCallbacks.ContainsKey(callBackId))
                 return;
 
             Action<Response> consumer = null;
-
-            cunsumersCallbacks.TryGetValue(args.BasicProperties.CorrelationId, out consumer);
+            cunsumersCallbacks.TryGetValue(callBackId, out consumer);
             if (consumer == null)
                 return;
 
@@ -118,9 +122,11 @@ namespace RunRabbitRun.Net
                 response = r;
                 delayCancelToken.Cancel();
             }
-            RegisterCallback(request.CorrelationId, ResponseRecieved);
 
-            Send(request);
+            var callBackId = Guid.NewGuid().ToString();
+            RegisterCallback(callBackId, ResponseRecieved);
+
+            Send(callBackId, request);
 
             await Task.Delay(request.Expiration == -1 ? 10000 : request.Expiration, delayCancelToken.Token).ContinueWith(task =>
               {
@@ -137,7 +143,7 @@ namespace RunRabbitRun.Net
             return response;
         }
 
-        private void Send(Request request)
+        private void Send(string callBackId, Request request)
         {
             var properties = channel.CreateBasicProperties();
             properties.ReplyTo = replyRoute;
@@ -149,9 +155,13 @@ namespace RunRabbitRun.Net
             if (!string.IsNullOrEmpty(request.ContentType))
                 properties.ContentType = request.ContentType;
 
-            properties.CorrelationId = request.CorrelationId.ToString();
+            properties.CorrelationId = request.CorrelationId;
             if (request.Headers.Count > 0)
                 properties.Headers = request.Headers;
+            else
+                properties.Headers = new Dictionary<string, object>();
+
+            properties.Headers.Add("rabbit-callback-id", callBackId);
 
             //Since IModel not thread safe we will lock publishing until official client will not support async
             lock (publishLock)

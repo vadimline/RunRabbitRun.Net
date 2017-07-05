@@ -25,8 +25,6 @@ namespace RunRabbitRun.Net
         {
             get
             {
-                if (channel == null)
-                    Setup();
                 return channel;
             }
             set => channel = value;
@@ -42,6 +40,7 @@ namespace RunRabbitRun.Net
             rabbitTunnelId = Guid.NewGuid().ToString();
             this.replyRoute = $"{replyRoute}.{rabbitTunnelId}";
             rabbitTunnelQueueName = $"rtunnel-{tunnelName}-{rabbitTunnelId}";
+            Setup();
         }
         private void Setup()
         {

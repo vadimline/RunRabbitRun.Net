@@ -6,7 +6,7 @@ Use official RabbitMQ.Client and DryIoc for dependency injection.
 
 # Warning
 
-**Project not ready for production**
+**Project is in PoC state**
 
 # Code Example (Basic consumer)
 
@@ -72,11 +72,8 @@ static void Main(string[] args)
 # Code Example (Request/Response consumer)
 
 ```
-Comming soon
-```
 
-# Installation
-NUGET Comming soon
+```
 
 
 # License

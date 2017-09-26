@@ -265,5 +265,7 @@ namespace RunRabbitRun.Net.Test
                 "exchange.queue",
                 A<Dictionary<string, object>>._)).MustHaveHappened();
         }
+
+        
     }
 }

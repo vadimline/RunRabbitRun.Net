@@ -49,9 +49,14 @@ namespace RunRabbitRun.Net
                 if (qosAttribute != null)
                     consumerMainChannel.BasicQos(0, qosAttribute.PrefetchCount, false);
             }
+            else
+            {
+                (IModel channel, string channelName) = EnsureChannelModel(new ChannelAttribute("RunRabbitRunDefaultChannel"));
+                consumerMainChannel = channel;
+            }
 
-            EnsureExchangesExists(consumerTypeAttributes);
-            EnsureExchangeToExchangeBinding(consumerTypeAttributes);
+            EnsureExchangesExists(consumerMainChannel, consumerTypeAttributes);
+            EnsureExchangeToExchangeBinding(consumerMainChannel, consumerTypeAttributes);
 
             BuildConsumeHandlers();
         }
@@ -88,7 +93,7 @@ namespace RunRabbitRun.Net
 
                 IModel consumeMethodChannel = SetupConsumeMethodChannel(consumeMethodAttributes) ?? consumerMainChannel;
 
-                EnsureQueueExists(consumeMethodAttributes);
+                EnsureQueueExists(consumeMethodChannel, consumeMethodAttributes);
 
                 var consumeAttribute = FindAttribute<ConsumeAttribute>(consumeMethodAttributes);
 
@@ -106,9 +111,36 @@ namespace RunRabbitRun.Net
                     consumeMethodChannel,
                     consumeQueue,
                     consumeAttribute.AutoAck,
-                    publicDependenciesContainer.CreateFacade()
+                    publicDependenciesContainer.CreateFacade(),
+                    GetBeforeMethod(),
+                    GetAfterMethod(),
+                    GetErrorMethod()
                 );
             }
+        }
+
+        private MethodInfo GetBeforeMethod()
+        {
+            return consumerType
+                .GetTypeInfo()
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(method => method.Name == "OnBefore");
+        }
+
+        private MethodInfo GetAfterMethod()
+        {
+            return consumerType
+                .GetTypeInfo()
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(method => method.Name == "OnAfter");
+        }
+
+        public MethodInfo GetErrorMethod()
+        {
+            return consumerType
+                .GetTypeInfo()
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .FirstOrDefault(method => method.Name == "OnError");
         }
 
         private IModel SetupConsumeMethodChannel(IEnumerable<Attribute> attributes)
@@ -170,7 +202,7 @@ namespace RunRabbitRun.Net
             return channelModel;
         }
 
-        private void EnsureExchangesExists(IEnumerable<Attribute> attributes)
+        private void EnsureExchangesExists(IModel consumeMethodChannel, IEnumerable<Attribute> attributes)
         {
             var exchangeAttributes = FindManyAttributes<ExchangeAttribute>(attributes);
 
@@ -179,26 +211,23 @@ namespace RunRabbitRun.Net
 
             var rabbitMqConnection = internalDependenciesContainer.Resolve<IConnection>();
 
-            using (IModel declareModel = rabbitMqConnection.CreateModel())
+            foreach (var exchangeAttribute in exchangeAttributes)
             {
-                foreach (var exchangeAttribute in exchangeAttributes)
-                {
-                    Dictionary<string, object> arguments = new Dictionary<string, object>();
-                    if (!string.IsNullOrEmpty(exchangeAttribute.AlternateExchange))
-                        arguments.Add("alternate-exchange", exchangeAttribute.AlternateExchange);
+                Dictionary<string, object> arguments = new Dictionary<string, object>();
+                if (!string.IsNullOrEmpty(exchangeAttribute.AlternateExchange))
+                    arguments.Add("alternate-exchange", exchangeAttribute.AlternateExchange);
 
-                    declareModel
-                        .ExchangeDeclare(
-                            exchangeAttribute.Name,
-                            exchangeAttribute.Type,
-                            exchangeAttribute.Durable,
-                            exchangeAttribute.AutoDelete,
-                            arguments);
-                }
+                consumeMethodChannel
+                    .ExchangeDeclare(
+                        exchangeAttribute.Name,
+                        exchangeAttribute.Type,
+                        exchangeAttribute.Durable,
+                        exchangeAttribute.AutoDelete,
+                        arguments);
             }
         }
 
-        private void EnsureExchangeToExchangeBinding(IEnumerable<Attribute> attributes)
+        private void EnsureExchangeToExchangeBinding(IModel consumeMethodChannel, IEnumerable<Attribute> attributes)
         {
             var exchangeToExchangeBindingAttributes = FindManyAttributes<ExchangeToExchangeBindingAttribute>(attributes);
 
@@ -207,16 +236,13 @@ namespace RunRabbitRun.Net
 
             var rabbitMqConnection = internalDependenciesContainer.Resolve<IConnection>();
 
-            using (IModel declareModel = rabbitMqConnection.CreateModel())
+            foreach (var bindingAttribute in exchangeToExchangeBindingAttributes)
             {
-                foreach (var bindingAttribute in exchangeToExchangeBindingAttributes)
-                {
-                    declareModel.ExchangeBind(bindingAttribute.Destination, bindingAttribute.Source, bindingAttribute.RoutingKey, null);
-                }
+                consumeMethodChannel.ExchangeBind(bindingAttribute.Destination, bindingAttribute.Source, bindingAttribute.RoutingKey, null);
             }
         }
 
-        private void EnsureQueueExists(IEnumerable<Attribute> attributes)
+        private void EnsureQueueExists(IModel consumeMethodChannel, IEnumerable<Attribute> attributes)
         {
             var queueAttributes = FindManyAttributes<QueueAttribute>(attributes);
 
@@ -225,22 +251,19 @@ namespace RunRabbitRun.Net
 
             var rabbitMqConnection = internalDependenciesContainer.Resolve<IConnection>();
 
-            using (IModel declareModel = rabbitMqConnection.CreateModel())
+            foreach (var queueAttribute in queueAttributes)
             {
-                foreach (var queueAttribute in queueAttributes)
-                {
-                    declareModel.QueueDeclare(queue: queueAttribute.Queue,
-                             durable: queueAttribute.Durable,
-                             exclusive: queueAttribute.Exclusive,
-                             autoDelete: queueAttribute.AutoDelete,
-                             arguments: null);
+                consumeMethodChannel.QueueDeclare(queue: queueAttribute.Queue,
+                         durable: queueAttribute.Durable,
+                         exclusive: queueAttribute.Exclusive,
+                         autoDelete: queueAttribute.AutoDelete,
+                         arguments: null);
 
-                    declareModel.QueueBind(
-                        queueAttribute.Queue,
-                        queueAttribute.Exchange,
-                        queueAttribute.RoutingKey,
-                        null);
-                }
+                consumeMethodChannel.QueueBind(
+                    queueAttribute.Queue,
+                    queueAttribute.Exchange,
+                    queueAttribute.RoutingKey,
+                    null);
             }
         }
     }

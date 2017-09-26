@@ -25,6 +25,9 @@ namespace RunRabbitRun.Net
         private IRabbitEventingBasicConsumer eventingBasicConsumer;
         private bool isReturnResponse;
         private List<ParameterResolver> parameterResolvers = new List<ParameterResolver>();
+        private MethodInfo beforeMethod;
+        private MethodInfo afterMethod;
+        private MethodInfo errorMethod;
 
         public ConsumeHandler(
             object consumerInstance,
@@ -32,7 +35,10 @@ namespace RunRabbitRun.Net
             IModel channelModel,
             string consumeQueueName,
             bool autoAck,
-            IContainer dependenciesContainer)
+            IContainer dependenciesContainer,
+            MethodInfo beforeMethod,
+            MethodInfo afterMethod,
+            MethodInfo errorMethod)
         {
             this.consumerInstance = consumerInstance;
             this.consumeMethod = consumeMethod;
@@ -40,6 +46,9 @@ namespace RunRabbitRun.Net
             this.consumeQueueName = consumeQueueName;
             this.autoAck = autoAck;
             this.dependenciesContainer = dependenciesContainer;
+            this.beforeMethod = beforeMethod;
+            this.afterMethod = afterMethod;
+            this.errorMethod = errorMethod;
 
             this.eventingBasicConsumer = GetConsumer();
             this.eventingBasicConsumer.Received += OnMessageReceived;
@@ -58,6 +67,7 @@ namespace RunRabbitRun.Net
 
             return new RabbitEventingBasicConsumer(this.channelModel);
         }
+
         private bool ShouldExpectResponse()
         {
             var returnType = this.consumeMethod.ReturnType;
@@ -80,7 +90,8 @@ namespace RunRabbitRun.Net
         }
 
         private async void OnMessageReceived(object sender, BasicDeliverEventArgs args)
-        {
+        {   
+            await InvokeOnBefore(consumeQueueName, args);
             using (var scope = dependenciesContainer.OpenScope())
             {
                 Action ack = null;
@@ -109,15 +120,65 @@ namespace RunRabbitRun.Net
                         await InvokeAndProcessResponseAsync(args, arguments.ToArray()).ConfigureAwait(false);
                     else
                         await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
+
+                    
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.Write(ex);
+                    await InvokeOnError(consumeQueueName, args, ex);
                     if (!autoAck)
                     {
                         reject(false);
                     }
                 }
+            }
+        }
+
+        public Task InvokeOnBefore(params object[] arguments)
+        {
+            try
+            {
+                if (beforeMethod != null)
+                    return (Task)beforeMethod.Invoke(consumerInstance, arguments);
+
+                return Task.FromResult(-1);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Task.FromResult(-1);
+            }
+        }
+
+        public Task InvokeOnAfter(params object[] arguments)
+        {
+            try
+            {
+                if (afterMethod != null)
+                    return (Task)afterMethod.Invoke(consumerInstance, arguments);
+
+                return Task.FromResult(-1);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Task.FromResult(-1);
+            }
+        }
+
+        public Task InvokeOnError(params object[] arguments)
+        {
+            try
+            {
+                if (errorMethod != null)
+                    return (Task)errorMethod.Invoke(consumerInstance, arguments);
+
+                return Task.FromResult(-1);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return Task.FromResult(-1);
             }
         }
 

@@ -1,5 +1,5 @@
 using System.Reflection;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using Newtonsoft.Json;
 using RabbitMQ.Client.Events;
 

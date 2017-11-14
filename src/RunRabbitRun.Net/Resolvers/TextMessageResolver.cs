@@ -1,5 +1,5 @@
 using System.Reflection;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using RabbitMQ.Client.Events;
 
 namespace RunRabbitRun.Net.Resolvers

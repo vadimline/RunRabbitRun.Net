@@ -1,6 +1,6 @@
 using FakeItEasy;
 using Xunit;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using RunRabbitRun.Net.Test.Consumers;
 using RabbitMQ.Client.Events;
 using RunRabbitRun.Net.Test.Dependencies;

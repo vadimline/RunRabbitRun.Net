@@ -4,13 +4,12 @@
     <Authors>Vadim Chaban</Authors>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Version>1.0.0-alpha-021</Version>
+    <Version>1.0.0-alpha-022</Version>
     <Description>.Net RabbitMq client</Description>
     <Copyright>Vadim Chaban</Copyright>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DryIoc" Version="2.10.7" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="1.1.2" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.2" />
     <PackageReference Include="RabbitMQ.Client" Version="5.0.1" />

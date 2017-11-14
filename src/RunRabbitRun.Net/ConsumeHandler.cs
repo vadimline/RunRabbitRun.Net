@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using RunRabbitRun.Net.Attributes;
 using RunRabbitRun.Net.Resolvers;
 using RabbitMQ.Client;

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Text;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using Newtonsoft.Json;
 using RunRabbitRun.Net.Sample.Models;
 using RabbitMQ.Client;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using RunRabbitRun.Net.Attributes;
 using RabbitMQ.Client;
 

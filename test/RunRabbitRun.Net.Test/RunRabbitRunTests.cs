@@ -2,7 +2,7 @@ using System;
 using FakeItEasy;
 using RunRabbitRun.Net.Test.Consumers;
 using Xunit;
-using DryIoc;
+using RunRabbitRun.Net.DryIoc;
 using System.Collections.Generic;
 
 namespace RunRabbitRun.Net.Test

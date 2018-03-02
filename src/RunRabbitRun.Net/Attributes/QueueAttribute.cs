@@ -9,7 +9,7 @@ namespace RunRabbitRun.Net.Attributes
 
         public string Queue { get; private set; }
 
-        public string RoutingKey { get; private set; }
+        public string[] RoutingKey { get; private set; }
 
         public bool Durable { get; set; }
 
@@ -20,11 +20,21 @@ namespace RunRabbitRun.Net.Attributes
         public QueueAttribute(
             string exchange,
             string queue,
-            string routingKey)
+            params string[] routingKey)
         {
             Exchange = exchange;
             Queue = queue;
             RoutingKey = routingKey;
+        }
+
+        public QueueAttribute(
+            string exchange,
+            string queue,
+            string routingKey)
+        {
+            Exchange = exchange;
+            Queue = queue;
+            RoutingKey = new string[] { routingKey };
         }
     }
 }

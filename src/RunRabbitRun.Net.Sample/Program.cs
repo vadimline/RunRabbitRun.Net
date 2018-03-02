@@ -15,21 +15,20 @@ namespace RunRabbitRun.Net.Sample
         {
             var mqConnectionFactory = new RabbitMQ.Client.ConnectionFactory()
             {
-                HostName = "rabbitmq",
+                HostName = "localhost",
                 Port = 5672, //5672,
-                UserName = "root",
-                Password = "12345",
-                VirtualHost = "prmq",
+                UserName = "mquser",
+                Password = "1",
+                VirtualHost = "rrr",
                 RequestedHeartbeat = 10,
-                AutomaticRecoveryEnabled = true,
-                DispatchConsumersAsync = true
+                AutomaticRecoveryEnabled = true
             };
 
             var connection = mqConnectionFactory.CreateConnection("RunRabbitRun.Net.Sample");
 
-            // Rabbit rabbit = new Rabbit(connection);
-            // rabbit.Dependencies.Register<IUserRepository, UserRepository>();
-            // rabbit.Run();
+            Rabbit rabbit = new Rabbit(connection);
+            rabbit.Dependencies.Register<IUserRepository, UserRepository>();
+            rabbit.Run();
 
 
             // Request/Response implementation demo

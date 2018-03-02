@@ -115,34 +115,36 @@ namespace RunRabbitRun.Net
             return encoding.GetBytes(body);
         }
 
-        public async Task<Response> SendAsync(Request request)
+        public Task<Response> SendAsync(Request request)
         {
-            Response response = null;
             var delayCancelToken = new CancellationTokenSource();
+
+            TaskCompletionSource<Response> taskCompletionSource =
+                new TaskCompletionSource<Response>();
+
             void ResponseRecieved(Response r)
             {
-                response = r;
+                taskCompletionSource.SetResult(r);
                 delayCancelToken.Cancel();
             }
 
             var callBackId = Guid.NewGuid().ToString();
             RegisterCallback(callBackId, ResponseRecieved);
-
             Send(callBackId, request);
 
-            await Task.Delay(request.Expiration == -1 ? 10000 : request.Expiration, delayCancelToken.Token).ContinueWith(task =>
+            Task.Delay(request.Expiration == -1 ? 10000 : request.Expiration, delayCancelToken.Token).ContinueWith(task =>
               {
                   UnregisterCallback(request.CorrelationId);
                   if (!task.IsCanceled)
                       // This mean that delay task complete and no response recieved
-                      response = new Response
+                      taskCompletionSource.SetResult(new Response
                       {
                           StatusCode = 408,
                           StatusText = "Timeout"
-                      };
+                      });
               });
 
-            return response;
+            return taskCompletionSource.Task;
         }
 
         private void Send(string callBackId, Request request)

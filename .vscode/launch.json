@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/src/RunRabbitRun.Net.Sample/bin/Debug/netcoreapp1.1/RunRabbitRun.Net.Sample.dll",
+            "program": "${workspaceRoot}/src/RunRabbitRun.Net.Sample/bin/Debug/netcoreapp2.0/RunRabbitRun.Net.Sample.dll",
             "args": [],
             "cwd": "${workspaceRoot}",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
@@ -24,7 +24,7 @@
             "request": "launch",
             "preLaunchTask": "test",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceRoot}/test/RunRabbitRun.Net.Test/bin/Debug/netcoreapp1.1/RunRabbitRun.Net.Test.dll",
+            "program": "${workspaceRoot}/test/RunRabbitRun.Net.Test/bin/Debug/netcoreapp2.0/RunRabbitRun.Net.Test.dll",
             "args": [],
             "cwd": "${workspaceRoot}",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window

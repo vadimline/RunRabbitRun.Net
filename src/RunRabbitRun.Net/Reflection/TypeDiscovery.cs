@@ -49,12 +49,13 @@ namespace RunRabbitRun.Net.Reflection
         {
             List<Assembly> assemblies = new List<Assembly>();
             assemblies.Add(entryAssembly);
+            
             foreach (var runtimeLibrary in dependencyContext.RuntimeLibraries)
             {
                 if (!IsReferencingPowerRabbitMq(runtimeLibrary))
                     continue;
 
-                foreach (var runtimeAssembly in runtimeLibrary.Assemblies)
+                foreach (var runtimeAssembly in runtimeLibrary.GetDefaultAssemblyNames(dependencyContext))
                 {
                     assemblies.Add(Assembly.Load(runtimeAssembly.Name));
                 }

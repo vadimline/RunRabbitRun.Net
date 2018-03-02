@@ -259,11 +259,14 @@ namespace RunRabbitRun.Net
                          autoDelete: queueAttribute.AutoDelete,
                          arguments: null);
 
-                consumeMethodChannel.QueueBind(
-                    queueAttribute.Queue,
-                    queueAttribute.Exchange,
-                    queueAttribute.RoutingKey,
-                    null);
+                foreach (var route in queueAttribute.RoutingKey)
+                {
+                    consumeMethodChannel.QueueBind(
+                        queueAttribute.Queue,
+                        queueAttribute.Exchange,
+                        route,
+                        null);
+                }
             }
         }
     }

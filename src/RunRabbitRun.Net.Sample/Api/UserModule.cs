@@ -14,7 +14,7 @@ namespace RunRabbitRun.Net.Sample
         {
         }
 
-        [Queue(exchange: "users", queue: "user-create", routingKey: "user.cmd.create", AutoDelete = true)]
+        [Queue("users", "user-create", "user.cmd.create", AutoDelete = true)]
         [Consume(autoAck: true)]
         [Qos(100)]
         [Channel(name: "createchannel")]

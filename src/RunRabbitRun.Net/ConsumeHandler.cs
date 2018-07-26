@@ -90,16 +90,31 @@ namespace RunRabbitRun.Net
         }
 
         private async void OnMessageReceived(object sender, BasicDeliverEventArgs args)
-        {   
+        {
             await InvokeOnBefore(consumeQueueName, args);
             using (var scope = dependenciesContainer.OpenScope())
             {
                 Action ack = null;
                 Action<bool> reject = null;
+                bool ackOrRejectInvoked = false;
                 if (!autoAck)
                 {
-                    ack = () => channelModel.BasicAck(args.DeliveryTag, false);
-                    reject = (bool requeue) => channelModel.BasicReject(args.DeliveryTag, requeue);
+                    ack = () =>
+                    {
+                        if (!ackOrRejectInvoked)
+                        {
+                            ackOrRejectInvoked = true;
+                            channelModel.BasicAck(args.DeliveryTag, false);
+                        }
+                    };
+                    reject = (bool requeue) =>
+                    {
+                        if (!ackOrRejectInvoked)
+                        {
+                            ackOrRejectInvoked = true;
+                            channelModel.BasicReject(args.DeliveryTag, requeue);
+                        }
+                    };
                 }
 
                 try
@@ -121,7 +136,7 @@ namespace RunRabbitRun.Net
                     else
                         await InvokeAndForget(arguments.ToArray()).ConfigureAwait(false);
 
-                    
+
                 }
                 catch (Exception ex)
                 {

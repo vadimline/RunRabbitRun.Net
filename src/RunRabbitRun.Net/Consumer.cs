@@ -18,6 +18,7 @@ namespace RunRabbitRun.Net
 
         private List<string> channelsKeys = new List<string>();
         private IModel consumerMainChannel = null;
+        private List<ConsumeHandler> consumeHandlers = new List<ConsumeHandler>();
 
         public Consumer(
             Type consumerType,
@@ -116,6 +117,7 @@ namespace RunRabbitRun.Net
                     GetAfterMethod(),
                     GetErrorMethod()
                 );
+                consumeHandlers.Add(consumeHandler);
             }
         }
 

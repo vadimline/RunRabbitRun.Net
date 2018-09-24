@@ -287,6 +287,13 @@ namespace RunRabbitRun.Net.Test
             rabbit.RegisterConsumer<IConsumer>();
             rabbit.Run();
 
+            A.CallTo(() => model.QueueDeclare(
+                "runtimequeue:12345",
+                A<bool>._,
+                A<bool>._,
+                false,
+                A<Dictionary<string, object>>._)).MustHaveHappened();
+
             A.CallTo(() => model.QueueBind(
                 "runtimequeue:12345",
                 "exchange",

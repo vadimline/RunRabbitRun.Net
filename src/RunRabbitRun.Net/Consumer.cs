@@ -260,10 +260,17 @@ namespace RunRabbitRun.Net
                 return;
 
             var rabbitMqConnection = internalDependenciesContainer.Resolve<IConnection>();
+            var queueNameBuilder = publicDependenciesContainer
+                    .Resolve<IQueueNameBuilder>(IfUnresolved.ReturnDefault);
 
             foreach (var queueAttribute in queueAttributes)
             {
-                consumeMethodChannel.QueueDeclare(queue: queueAttribute.Queue,
+                var queue = queueAttribute.Queue;
+                if (queueNameBuilder != null)
+                {
+                    queue = queueNameBuilder.Build(queue);
+                }
+                consumeMethodChannel.QueueDeclare(queue: queue,
                          durable: queueAttribute.Durable,
                          exclusive: queueAttribute.Exclusive,
                          autoDelete: queueAttribute.AutoDelete,
@@ -272,7 +279,7 @@ namespace RunRabbitRun.Net
                 foreach (var route in queueAttribute.RoutingKey)
                 {
                     consumeMethodChannel.QueueBind(
-                        queueAttribute.Queue,
+                        queue,
                         queueAttribute.Exchange,
                         route,
                         null);

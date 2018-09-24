@@ -4,7 +4,7 @@
     <Authors>Vadim Chaban</Authors>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Version>1.0.0-alpha-026</Version>
+    <Version>1.0.0-alpha-027</Version>
     <Description>.Net RabbitMq client</Description>
     <Copyright>Vadim Chaban</Copyright>
     <PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>

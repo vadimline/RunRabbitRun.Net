@@ -43,5 +43,9 @@ namespace RunRabbitRun.Net.Test.Consumers
         Task OnMessageFromQueue(
             [Inject] IUserRepository userRepository,
             [JsonMessage] User user);
+
+        [Queue(exchange: "exchange", queue: "runtimequeue:{0}", routingKey: "exchange.runtimequeue", AutoDelete = false)]
+        [Consume(queue: "notautodelete")]
+        Task OnDynamicQueueBuilderAsync();
     }
 }

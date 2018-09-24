@@ -266,6 +266,32 @@ namespace RunRabbitRun.Net.Test
                 A<Dictionary<string, object>>._)).MustHaveHappened();
         }
 
-        
+        [Fact]
+        public void Should_build_queue_name_runtime()
+        {
+            var connection = FakeRabbitMqFactory.GetConnection();
+            var model = FakeRabbitMqFactory.GetModel();
+
+            A.CallTo(() => connection.CreateModel()).Returns(model);
+
+            RunRabbitRun.Net.Rabbit rabbit = new Rabbit(connection);
+            rabbit.AutoDiscovery = false;
+            rabbit.Dependencies.Register<IQueueNameBuilder, QeueuNameBuilder>(
+                made: Made.Of(
+                    parameters: Parameters.Of
+                        .Name("runtimePart", request => "12345")
+                ),
+                reuse: Reuse.Singleton);
+
+            rabbit.Dependencies.Register<IConsumer, Consumer>();
+            rabbit.RegisterConsumer<IConsumer>();
+            rabbit.Run();
+
+            A.CallTo(() => model.QueueBind(
+                "runtimequeue:12345",
+                "exchange",
+                "exchange.runtimequeue",
+                A<Dictionary<string, object>>._)).MustHaveHappened();
+        }
     }
 }

@@ -22,5 +22,10 @@ namespace RunRabbitRun.Net.Test.Consumers
         {
             throw new NotImplementedException();
         }
+
+        public Task OnDynamicQueueBuilderAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

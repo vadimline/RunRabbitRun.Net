@@ -103,7 +103,15 @@ namespace RunRabbitRun.Net
                 if (string.IsNullOrEmpty(consumeQueue))
                 {
                     var queueAttributes = FindManyAttributes<QueueAttribute>(consumeMethodAttributes);
-                    consumeQueue = queueAttributes.First().Queue;
+                    var queueAttribute = queueAttributes.First();
+                    consumeQueue = queueAttribute.Queue;
+                }
+
+                var queueNameBuilder = publicDependenciesContainer
+                    .Resolve<IQueueNameBuilder>(IfUnresolved.ReturnDefault);
+                if (queueNameBuilder != null)
+                {
+                    consumeQueue = queueNameBuilder.Build(consumeQueue);
                 }
 
                 var consumeHandler = new ConsumeHandler(
